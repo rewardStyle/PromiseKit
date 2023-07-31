@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "PromiseKit",
-    platforms: [.iOS(.v11)], // The XCFramework bundle (built from the origin PromiseKit) is manually built for specific platforms. Setting this `platforms` value assures that this package is only available to platforms supported by the bundle.
+    platforms: [.iOS(.v11)], // Setting this `platforms` value assures that this package is only available to platforms supported by the XCFramework bundle (built from the origin PromiseKit repo).
     products: [
         .library(
             name: "PromiseKit",
