@@ -8,7 +8,7 @@
 import PromiseKit
 
 @available(iOS 13.0, *)
-extension Promise {
+public extension Promise {
     /// Execute this promise using Swift Concurrency. Any caught errors will be thrown.
     /// - Parameters:
     ///   - dispatchQueue: The `DispatchQueue` that the `Promise` will be returned or caught on. PromiseKit defaults to returning/catching this `Promise` on the main thread.
