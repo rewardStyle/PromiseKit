@@ -7,7 +7,7 @@
 
 import PromiseKit
 
-extension AnyPromise {
+public extension AnyPromise {
     func asPromise<T>() -> Promise<T> {
         asPromise(type: T.self)
     }
