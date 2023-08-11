@@ -18,12 +18,16 @@ public final class TaskPipe<T>: Thenable, CatchMixin {
     public var result: Result<T>?
 
     /// The internal `async` block that will determine how to resolve the promise chain.
-    var task: () async throws -> T
+    var operation: () async throws -> T
+
+    /// DispatchQueue that the result returns on
+    var queue: DispatchQueue
 
     /// Create a new `TaskPipe` with an `async` block.
     /// - Parameter task: The `async` block that will determine how to resolve the promise chain.
-    public init(execute task: @escaping () async throws -> T) {
-        self.task = task
+    public init(on queue: DispatchQueue = .main, operation: @escaping () async throws -> T) {
+        self.queue = queue
+        self.operation = operation
     }
 
     /// `pipe` is immediately executed when this `Thenable` is resolved
@@ -31,10 +35,14 @@ public final class TaskPipe<T>: Thenable, CatchMixin {
     public func pipe(to: @escaping (Result<T>) -> Void) {
         Task {
             do {
-                let response = try await task()
-                to(.fulfilled(response))
+                let response = try await operation()
+                queue.async {
+                    to(.fulfilled(response))
+                }
             } catch {
-                to(.rejected(error))
+                queue.async {
+                    to(.rejected(error))
+                }
             }
         }
     }
@@ -67,8 +75,8 @@ public final class TaskPipe<T>: Thenable, CatchMixin {
 /// - Parameter task: The `async` `Task` to be executed. When this `Task` resolves the promise will also resolve with the same value and type.
 /// - Returns: A `TaskPipe` instance, which is `Thenable`.
 @available(iOS 13.0, *)
-public func firstly<T>(execute task: @escaping () async throws -> T) -> TaskPipe<T> {
-    TaskPipe(execute: task)
+public func firstly<T>(on queue: DispatchQueue = .main, operation: @escaping () async throws -> T) -> TaskPipe<T> {
+    TaskPipe(on: queue, operation: operation)
 }
 
 @available(iOS 13.0, *)
@@ -85,27 +93,40 @@ public extension Thenable {
     /// ```
     ///   firstly {
     ///       URLSession.shared.dataTask(.promise, with: url1)
-    ///   }.then { response in
+    ///   }.thenAsync { response in
     ///       transform(data: response.data)
     ///   }.done { transformation in
     ///       //…
     ///   }
     /// ```
-    func then<U>(_ body: @escaping (T) async throws -> U) -> Promise<U> {
+    func then<U>(
+        on queue: DispatchQueue = .main,
+        priority: TaskPriority? = nil,
+        operation: @escaping (T) async throws -> U
+    ) -> Promise<U> {
         Promise { resolver in
             pipe { result in
                 switch result {
                 case .fulfilled(let value):
-                    Task {
-                        do {
-                            let result = try await body(value)
-                            resolver.fulfill(result)
-                        } catch {
-                            resolver.reject(error)
+                    Task(
+                        priority: priority,
+                        operation: {
+                            do {
+                                let result = try await operation(value)
+                                queue.async {
+                                    resolver.fulfill(result)
+                                }
+                            } catch {
+                                queue.async {
+                                    resolver.reject(error)
+                                }
+                            }
                         }
-                    }
+                    )
                 case .rejected(let error):
-                    resolver.reject(error)
+                    queue.async {
+                        resolver.reject(error)
+                    }
                 @unknown default:
                     break
                 }
