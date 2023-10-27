@@ -18,14 +18,14 @@ public final class TaskPipe<T>: Thenable, CatchMixin {
     public var result: Result<T>?
 
     /// The internal `async` block that will determine how to resolve the promise chain.
-    var operation: () async throws -> T
+    var operation: @MainActor () async throws -> T
 
     /// DispatchQueue that the result returns on
     var queue: DispatchQueue
 
     /// Create a new `TaskPipe` with an `async` block.
     /// - Parameter task: The `async` block that will determine how to resolve the promise chain.
-    public init(on queue: DispatchQueue = .main, operation: @escaping () async throws -> T) {
+    public init(on queue: DispatchQueue = .main, operation: @MainActor @escaping () async throws -> T) {
         self.queue = queue
         self.operation = operation
     }
@@ -75,7 +75,7 @@ public final class TaskPipe<T>: Thenable, CatchMixin {
 /// - Parameter task: The `async` `Task` to be executed. When this `Task` resolves the promise will also resolve with the same value and type.
 /// - Returns: A `TaskPipe` instance, which is `Thenable`.
 @available(iOS 13.0, *)
-public func firstly<T>(on queue: DispatchQueue = .main, operation: @escaping () async throws -> T) -> TaskPipe<T> {
+public func firstly<T>(on queue: DispatchQueue = .main, operation: @MainActor @escaping () async throws -> T) -> TaskPipe<T> {
     TaskPipe(on: queue, operation: operation)
 }
 
@@ -93,7 +93,7 @@ public extension Thenable {
     /// ```
     ///   firstly {
     ///       URLSession.shared.dataTask(.promise, with: url1)
-    ///   }.thenAsync { response in
+    ///   }.then { response in
     ///       transform(data: response.data)
     ///   }.done { transformation in
     ///       //…
@@ -102,7 +102,7 @@ public extension Thenable {
     func then<U>(
         on queue: DispatchQueue = .main,
         priority: TaskPriority? = nil,
-        operation: @escaping (T) async throws -> U
+        operation: @MainActor @escaping (T) async throws -> U
     ) -> Promise<U> {
         Promise { resolver in
             pipe { result in

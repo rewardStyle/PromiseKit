@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "PromiseKit",
-    platforms: [.iOS(.v11)], // Setting this `platforms` value assures that this package is only available to platforms supported by the XCFramework bundle (built from the origin PromiseKit repo).
+    platforms: [.iOS(.v13)], // Setting this `platforms` value assures that this package is only available to platforms supported by the XCFramework bundle (built from the origin PromiseKit repo).
     products: [
         .library(
             name: "PromiseKit",
@@ -26,7 +26,7 @@ let package = Package(
         ),
         .testTarget(
             name: "PromiseKitTests",
-            dependencies: ["PromiseKit"]
+            dependencies: ["PromiseKit", "PMKExtensions", "PMKExtensionsObjc"]
         ),
     ]
 )

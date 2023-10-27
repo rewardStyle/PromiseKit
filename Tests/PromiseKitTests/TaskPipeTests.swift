@@ -7,7 +7,7 @@
 
 import XCTest
 import PromiseKit
-@testable import Extensions
+@testable import PMKExtensions
 
 final class TaskPipeTests: XCTestCase {
 
