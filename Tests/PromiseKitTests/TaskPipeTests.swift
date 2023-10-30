@@ -9,6 +9,7 @@ import XCTest
 import PromiseKit
 @testable import PMKExtensions
 
+@available(iOS 13.0, *)
 final class TaskPipeTests: XCTestCase {
 
     let error = NSError(domain: "I am a teapot 🫖", code: 418)
